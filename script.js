@@ -47,3 +47,15 @@ function removeFromFavourites(imdbID) {
     const movie = document.getElementById(imdbID);
     movie.remove();
 }
+
+window.onload = function() {
+    // Get all the links in the navigation bar
+    var links = document.getElementsByClassName("navbar")[0].getElementsByTagName("a");
+     
+    // Loop through all the links and select the active link based on the current URL
+    for (var i = 0; i < links.length; i++) {
+       if (window.location.href.endsWith(links[i].href)) {
+         links[i].className += " active";
+       }
+    }
+   };
