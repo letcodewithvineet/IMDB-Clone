@@ -2,45 +2,57 @@ const searchInput = document.getElementById('search-input');
 const searchResultsList = document.getElementById('search-results');
 const favouritesList = document.getElementById('favourites-list');
 
-searchInput.addEventListener('input', (event) => {
-    fetchMovies(event.target.value);
-});
+const OMDB_API_KEY = '6ebaa4c6';
+const OMDB_API_URL = 'https://www.omdbapi.com/';
 
-function fetchMovies(query) {
-    fetch(`https://www.omdbapi.com/?s=${query}&apikey=6ebaa4c6`)
-        .then((response) => response.json())
-        .then((data) => {
-            searchResultsList.innerHTML = '';
-            data.Search.forEach((movie) => {
-                const listItem = document.createElement('li');
-                listItem.textContent = movie.Title;
-                listItem.id = movie.imdbID;
+searchInput.addEventListener('input', handleSearchInput);
 
-                const favouriteButton = document.createElement('button');
-                favouriteButton.classList.add('favourite-button');
-                favouriteButton.textContent = 'Favourite';
-                favouriteButton.addEventListener('click', () => addToFavourites(movie));
+function handleSearchInput(event) {
+    const query = event.target.value;
+    fetchMovies(query, OMDB_API_URL, OMDB_API_KEY);
+}
 
-                listItem.appendChild(favouriteButton);
-                searchResultsList.appendChild(listItem);
-            });
-        });
+function fetchMovies(query, apiUrl, apiKey) {
+    fetch(`${apiUrl}?s=${query}&apikey=${apiKey}`)
+        .then(response => response.json())
+        .then(data => displaySearchResults(data.Search));
+}
+
+function displaySearchResults(movies) {
+    searchResultsList.innerHTML = '';
+    movies.forEach(movie => {
+        const listItem = createMovieListItem(movie, addToFavourites);
+        searchResultsList.appendChild(listItem);
+    });
+}
+
+function createMovieListItem(movie, onClickHandler) {
+    const listItem = document.createElement('li');
+    listItem.textContent = movie.Title;
+    listItem.id = movie.imdbID;
+
+    const button = document.createElement('button');
+    button.classList.add('favourite-button');
+    button.textContent = 'Favourite';
+    button.addEventListener('click', () => onClickHandler(movie));
+
+    listItem.appendChild(button);
+    return listItem;
 }
 
 function addToFavourites(movie) {
-    const favouriteItem = document.createElement('li');
-    favouriteItem.textContent = movie.Title;
-    favouriteItem.id = movie.imdbID;
+    const favouriteItem = createMovieListItem(movie, removeFromFavourites);
+    const removeButton = favouriteItem.querySelector('.favourite-button');
+    removeButton.classList.remove('favourite-button');
+    removeButton.classList.add('remove-favourite-button');
+    removeButton.textContent = 'Remove';
+    removeButton.addEventListener('click', () => removeFromFavourites(movie.imdbID));
 
-    const removeFavouriteButton = document.createElement('button');
-    removeFavouriteButton.classList.add('remove-favourite-button');
-    removeFavouriteButton.textContent = 'Remove';
-    removeFavouriteButton.addEventListener('click', () => removeFromFavourites(movie.imdbID));
-
-    favouriteItem.appendChild(removeFavouriteButton);
     favouritesList.appendChild(favouriteItem);
-
-    searchResultsList.querySelector(`#${movie.imdbID}`).remove();
+    const searchResultItem = searchResultsList.querySelector(`#${movie.imdbID}`);
+    if (searchResultItem) {
+        searchResultItem.remove();
+    }
 }
 
 function removeFromFavourites(imdbID) {
@@ -48,14 +60,15 @@ function removeFromFavourites(imdbID) {
     movie.remove();
 }
 
-window.onload = function() {
-    // Get all the links in the navigation bar
-    var links = document.getElementsByClassName("navbar")[0].getElementsByTagName("a");
-     
-    // Loop through all the links and select the active link based on the current URL
-    for (var i = 0; i < links.length; i++) {
-       if (window.location.href.endsWith(links[i].href)) {
-         links[i].className += " active";
-       }
+window.onload = function () {
+    highlightActiveNavLink();
+};
+
+function highlightActiveNavLink() {
+    const links = document.getElementsByClassName("navbar")[0].getElementsByTagName("a");
+    for (let i = 0; i < links.length; i++) {
+        if (window.location.href.endsWith(links[i].href)) {
+            links[i].classList.add("active");
+        }
     }
-   };
+}
